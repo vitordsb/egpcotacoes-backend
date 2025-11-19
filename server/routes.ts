@@ -52,7 +52,7 @@ export function registerRoutes(app: express.Express) {
 
   router.get("/auth/me", attachUser, (req, res) => {
     if (!req.user) {
-      return res.status(401).json({ error: "Unauthorized" });
+      return res.status(204).end();
     }
     return res.json(req.user);
   });
