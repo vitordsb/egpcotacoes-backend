@@ -6,9 +6,9 @@
   "main": "server/_core/index.ts",
   "scripts": {
     "dev": "NODE_ENV=development tsx watch server/_core/index.ts",
+    "prestart": "npm run build",
     "start": "NODE_ENV=production node --experimental-specifier-resolution=node dist/server/_core/index.js",
     "build": "tsc",
-    "postinstall": "npm run build",
     "test": "vitest run"
   },
   "keywords": [],
