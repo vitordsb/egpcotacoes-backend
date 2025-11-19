@@ -3,7 +3,7 @@
   "exclude": ["node_modules", "dist", "**/*.test.ts"],
   "compilerOptions": {
     "incremental": true,
-    "tsBuildInfoFile": "./node_modules/typescript/tsbuildinfo",
+    "tsBuildInfoFile": "./.tsbuildinfo",
     "target": "ES2020",
     "module": "ESNext",
     "moduleResolution": "bundler",
