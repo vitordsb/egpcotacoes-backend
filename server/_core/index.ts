@@ -31,9 +31,11 @@ async function startServer() {
   const server = createServer(app);
   const allowedOrigins = Array.from(
     new Set(
-      [ENV.clientOrigin, "http://localhost:5173", "http://127.0.0.1:5173"].filter(
-        Boolean
-      )
+      [
+        ...ENV.clientOrigins,
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+      ].filter(Boolean)
     )
   );
   app.use(
