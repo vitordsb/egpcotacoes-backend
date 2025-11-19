@@ -164,6 +164,17 @@ export async function getSupplierByCnpjForQuotation(
   return (await suppliersCollection.findOne({ cnpj, quotationId })) as Supplier | null;
 }
 
+export async function getSupplierByCnpjAndPassword(
+  cnpj: string,
+  password: string
+) {
+  const suppliersCollection = await getCollection<Supplier>("suppliers");
+  return (await suppliersCollection.findOne({
+    cnpj,
+    temporaryPassword: password,
+  })) as Supplier | null;
+}
+
 export async function getSuppliersByQuotation(quotationId: number) {
   const suppliersCollection = await getCollection<Supplier>("suppliers");
   return (await suppliersCollection.find({ quotationId }).sort({ createdAt: -1 }).toArray()) as Supplier[];
@@ -172,6 +183,18 @@ export async function getSuppliersByQuotation(quotationId: number) {
 export async function getSupplierById(id: number) {
   const suppliersCollection = await getCollection<Supplier>("suppliers");
   return (await suppliersCollection.findOne({ id })) as Supplier | null;
+}
+
+export async function deleteSupplierById(id: number) {
+  const suppliersCollection = await getCollection<Supplier>("suppliers");
+  const quotesCollection = await getCollection<SupplierQuote>("supplierQuotes");
+  const observationsCollection = await getCollection<SupplierObservation>("supplierObservations");
+  const historyCollection = await getCollection<QuoteHistory>("quoteHistory");
+
+  await quotesCollection.deleteMany({ supplierId: id });
+  await observationsCollection.deleteMany({ supplierId: id });
+  await historyCollection.deleteMany({ supplierId: id });
+  await suppliersCollection.deleteOne({ id });
 }
 
 export async function updateSupplierPassword(

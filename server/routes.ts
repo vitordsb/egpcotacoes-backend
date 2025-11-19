@@ -72,29 +72,51 @@ export function registerRoutes(app: express.Express) {
   });
 
   router.post("/supplier/login", async (req, res) => {
-    const { quotationId, cnpj, companyName, password } = req.body ?? {};
-    if (!quotationId || !cnpj || !companyName || !password) {
+    const { quotationId: rawQuotationId, cnpj, companyName, password } = req.body ?? {};
+    if (!cnpj || !companyName || !password) {
       return res.status(400).json({ error: "Dados incompletos" });
     }
-    const supplier = await db.getSupplierByCnpjForQuotation(cnpj, quotationId);
+
+    let supplier = null;
+    let quotationId: number | undefined =
+      typeof rawQuotationId === "number"
+        ? rawQuotationId
+        : rawQuotationId
+          ? Number(rawQuotationId)
+          : undefined;
+
+    if (quotationId) {
+      supplier = await db.getSupplierByCnpjForQuotation(cnpj, quotationId);
+    }
+
     if (!supplier) {
+      supplier = await db.getSupplierByCnpjAndPassword(cnpj, password);
+      quotationId = supplier?.quotationId ?? quotationId;
+    }
+
+    if (!supplier || !supplier.quotationId) {
       return res.status(404).json({ error: "Fornecedor nao encontrado" });
     }
-    if (!supplier.quotationId || supplier.quotationId !== quotationId) {
+
+    if (quotationId && supplier.quotationId !== quotationId) {
       return res.status(401).json({ error: "Fornecedor nao autorizado" });
     }
+
     if (
       supplier.companyName?.toLowerCase().trim() !==
       companyName.toLowerCase().trim()
     ) {
       return res.status(401).json({ error: "Nome fantasia nao confere" });
     }
+
     if (new Date() > supplier.passwordExpiresAt) {
       return res.status(401).json({ error: "Senha expirada" });
     }
+
     if (supplier.temporaryPassword !== password) {
       return res.status(401).json({ error: "Senha incorreta" });
     }
+
     res.json({
       success: true,
       supplierId: supplier.id,
@@ -433,6 +455,15 @@ export function registerRoutes(app: express.Express) {
         submittedAt: supplier.submittedAt,
       }))
     );
+  });
+
+  router.delete("/admin/access/:supplierId", async (req, res) => {
+    const supplierId = Number(req.params.supplierId);
+    if (!supplierId) {
+      return res.status(400).json({ error: "supplierId obrigatório" });
+    }
+    await db.deleteSupplierById(supplierId);
+    res.json({ success: true });
   });
 
   app.use("/api", router);
