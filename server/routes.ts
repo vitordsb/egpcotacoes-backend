@@ -396,7 +396,17 @@ export function registerRoutes(app: express.Express) {
       return res.status(500).json({ error: "Falha ao criar fornecedor" });
     }
     const baseUrl = ENV.clientOrigin.replace(/\/+$/, "");
-    const accessUrl = `${baseUrl}/supplier/access?quotationId=${supplier.quotationId}`;
+    const params = new URLSearchParams({
+      quotationId: String(supplier.quotationId),
+    });
+    if (supplier.cnpj) {
+      params.set("cnpj", supplier.cnpj);
+    }
+    if (supplier.companyName) {
+      params.set("companyName", supplier.companyName);
+    }
+    params.set("password", password);
+    const accessUrl = `${baseUrl}/supplier/access?${params.toString()}`;
     res.json({ success: true, password, expiresAt, accessUrl, supplier });
   });
 
@@ -414,7 +424,12 @@ export function registerRoutes(app: express.Express) {
         companyName: supplier.companyName,
         expiresAt: supplier.passwordExpiresAt,
         password: supplier.temporaryPassword,
-        accessUrl: `${baseUrl}/supplier/access?quotationId=${supplier.quotationId}`,
+        accessUrl: `${baseUrl}/supplier/access?${new URLSearchParams({
+          quotationId: String(supplier.quotationId),
+          ...(supplier.cnpj ? { cnpj: supplier.cnpj } : {}),
+          ...(supplier.companyName ? { companyName: supplier.companyName } : {}),
+          ...(supplier.temporaryPassword ? { password: supplier.temporaryPassword } : {}),
+        }).toString()}`,
         submittedAt: supplier.submittedAt,
       }))
     );
